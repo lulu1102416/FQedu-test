@@ -1,5 +1,5 @@
 # FQedu-test
-<!DOCTYPE html>
+
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
@@ -12,7 +12,7 @@
     --ok:#16a34a; --ok-bg:#ecfdf5; --err:#dc2626; --err-bg:#fef2f2;
   }
   *{box-sizing:border-box}
-  body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Noto Sans TC,Arial,"PingFang TC","Microsoft JhengHei",sans-serif; background:var(--bg); color:var(--text);}
+  body{margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Noto Sans TC,Arial,"PingFang TC","Microsoft JhengHei",sans-serif; background:var(--bg); color:var(--text);}  
   .wrap{max-width:920px; margin:36px auto; padding:0 16px}
   .card{background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.05)}
   .header{display:flex; align-items:center; justify-content:space-between; padding:18px 20px; gap:16px}
@@ -103,13 +103,6 @@
           <div class="market" data-k="RE"></div>
         </div>
 
-        <div class="row" style="margin-top:12px;">
-          <div style="flex:1 1 100%;">
-            <label class="lbl muted">（可選）作答小記</label>
-            <input id="story" type="text" placeholder="想補充的想法或理由…" />
-          </div>
-        </div>
-
         <div class="btns">
           <button class="btn primary" id="btnSubmit">送出作答</button>
           <button class="btn ghost" id="btnBack">返回上一步</button>
@@ -117,13 +110,13 @@
 
         <div id="msg" class="msg"></div>
         <div id="scorebox" class="scorebox" style="display:none"></div>
-        <p class="muted" style="margin-top:10px">現在：前台會直接顯示「本題分數與答對數」。若後端同時回傳標準答案（ans），會同步標記各市場的對錯與正解。</p>
+        <p class="muted" style="margin-top:10px">抽題與作答皆由後端 API 處理；送出後會立即回寫到試算表（Responses / Scores）。</p>
       </div>
     </div>
   </div>
 
 <script>
-// 你的 Apps Script Web App URL
+// 你的 Apps Script Web App URL（務必用 /exec）
 const API_URL = 'https://script.google.com/macros/s/AKfycbzKkBkYtefNB97tiD2_smKNe5YP1jp0wzQF1T1bfvAl9vRE7wGi00YXVVLATxr9ZSRrOQ/exec';
 const $ = id => document.getElementById(id);
 const state = { qno:'', ans:{ STOCK:'',BOND:'',FX:'',COM:'',RE:'' } };
@@ -154,9 +147,7 @@ function mountMarkets(){
   });
 }
 function select(k, v){ state.ans[k] = v; }
-function escapeHtml(s){
-  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-}
+
 async function callApi(action,payload){
   const res = await fetch(API_URL,{ method:'POST', body: JSON.stringify({action, payload}) });
   const j = await res.json();
@@ -164,86 +155,67 @@ async function callApi(action,payload){
   return j;
 }
 
-async function fetchRandomWithFallback(studentId){
-  // 優先用新 API：requestRandom；若未部署則回退 requestQuestion(qno=911)；再不行則本地示範
-  try{
-    return await callApi('requestRandom', { studentId });
-  }catch(e1){
-    try{
-      const r = await callApi('requestQuestion', { qno: '911' });
-      return { question: { qno: r?.question?.qno || '911', text: r?.question?.text || '911恐攻' } };
-    }catch(e2){
-      return { question: { qno: '911', text: '911恐攻' } };
-    }
-  }
-}
-
-function showScore(score, correctCount){
-  const box = $('scorebox');
-  box.innerHTML = `<strong>本題得分：</strong>${Number(score ?? 0)}/20　｜　<strong>答對數：</strong>${Number(correctCount ?? 0)}/5`;
-  box.style.display = '';
-}
-
-function markByAnswerKey(ansKey){
-  if(!ansKey) return; // 若後端尚未回傳標準答案，略過視覺標記
-  const keys = { STOCK:'+', BOND:'+', FX:'-', COM:'-', RE:'-' };
-  Object.assign(keys, ansKey); // 以後端為準，沒有就用預設911示例
-  document.querySelectorAll('.market').forEach(box=>{
-    const k = box.dataset.k; const correct = keys[k];
-    const [p,n] = box.querySelectorAll('.pill'); // p=正面, n=負面
-    clearMarks(box);
-    // 標記正解
-    (correct === '+' ? p : n).classList.add('key');
-    // 標記學生作答對/錯
-    const user = state.ans[k];
-    if(user === '+') (correct === '+' ? p : p).classList.add(correct==='+'?'ok':'wrong');
-    if(user === '-') (correct === '-' ? n : n).classList.add(correct==='-'?'ok':'wrong');
-    // 高亮所選
-    if(user === '+') p.classList.add('active');
-    if(user === '-') n.classList.add('active');
-  });
-}
-
+// 僅呼叫後端的 requestRandom（取消 911 範例題 fallback）
 $('btnFetch').addEventListener('click', async ()=>{
   toast(true,''); show($('qwrap'), false); $('scorebox').style.display='none';
   const name=$('name').value.trim(), sid=$('sid').value.trim();
   if(!name || !sid){ toast(false,'請先輸入「姓名、學號」'); return; }
   try{
-    const r = await fetchRandomWithFallback(sid);
-    $('qtext').textContent = r.question.text ? `Q${r.question.qno}｜${r.question.text}` : `Q${r.question.qno}`;
-    state.qno = r.question.qno; mountMarkets();
-    show($('qwrap'), true); setCrumb();
+    const r = await callApi('requestRandom', { studentId: sid });
+    // 後端需回 question: { qno, text }
+    if(!r.question || !r.question.qno){ throw new Error('後端未回傳題目'); }
+    document.getElementById('qtext').textContent = r.question.text ? `Q${r.question.qno}｜${r.question.text}` : `Q${r.question.qno}`;
+    state.qno = String(r.question.qno);
+    mountMarkets();
+    show(document.getElementById('qwrap'), true); setCrumb();
   }catch(err){ toast(false, String(err.message||err)); }
 });
 
+// 送出作答：必填五市場；後端寫入試算表並回傳 score / correctCount /（可選）ans
 $('btnSubmit').addEventListener('click', async ()=>{
   toast(true,'');
   const name=$('name').value.trim(); const sid=$('sid').value.trim();
-  const qno=state.qno; const story=$('story').value.trim();
+  const qno=state.qno;
   const {STOCK,BOND,FX,COM,RE} = state.ans;
   if(!name || !sid){ toast(false,'請先輸入「姓名、學號」'); return; }
   if(!qno){ toast(false,'請先抽題'); return; }
   if(!(STOCK && BOND && FX && COM && RE)){ toast(false,'請完成五個市場的 ± 選擇'); return; }
   try{
-    const r = await callApi('submitAnswer', { name, studentId:sid, qno, story, stock:STOCK, bond:BOND, fx:FX, com:COM, re:RE });
+    const r = await callApi('submitAnswer', { name, studentId:sid, qno, stock:STOCK, bond:BOND, fx:FX, com:COM, re:RE });
     if(r.score == null){
       toast(true, '已送出作答（後端未回傳分數）');
     }else{
       toast(true, '作答完成');
-      showScore(r.score, r.correctCount);
-      // 若後端有回傳標準答案物件（例如 {STOCK:'+',...}），就顯示每市場對/錯
-      markByAnswerKey(r.ans);
+      // 顯示分數
+      const box = document.getElementById('scorebox');
+      box.innerHTML = `<strong>本題得分：</strong>${Number(r.score ?? 0)}/20　｜　<strong>答對數：</strong>${Number(r.correctCount ?? 0)}/5`;
+      box.style.display = '';
+      // 若後端回傳標準答案 ans:{STOCK:'+',...}，就標記每市場對/錯與正解
+      if(r.ans){
+        document.querySelectorAll('.market').forEach(box=>{
+          const k = box.dataset.k; const correct = r.ans[k];
+          const [p,n] = box.querySelectorAll('.pill'); // p=正面, n=負面
+          clearMarks(box);
+          if(correct === '+') p.classList.add('key');
+          if(correct === '-') n.classList.add('key');
+          const user = state.ans[k];
+          if(user === '+') p.classList.add(correct==='+'?'ok':'wrong');
+          if(user === '-') n.classList.add(correct==='-'?'ok':'wrong');
+        });
+      }
     }
   }catch(err){ toast(false, String(err.message||err)); }
 });
 
-$('btnBack').addEventListener('click', ()=>{ show($('qwrap'), false); toast(true,''); });
+$('btnBack').addEventListener('click', ()=>{ show(document.getElementById('qwrap'), false); toast(true,''); });
 $('btnReset').addEventListener('click', ()=>{
-  $('story').value=''; state.qno=''; state.ans={STOCK:'',BOND:'',FX:'',COM:'',RE:''};
-  show($('qwrap'), false); toast(true,''); setCrumb(); $('scorebox').style.display='none';
+  state.qno=''; state.ans={STOCK:'',BOND:'',FX:'',COM:'',RE:''};
+  show(document.getElementById('qwrap'), false); toast(true,''); setCrumb(); document.getElementById('scorebox').style.display='none';
 });
-$('name').addEventListener('input', setCrumb);
-$('sid').addEventListener('input', setCrumb);
+
+document.getElementById('name').addEventListener('input', setCrumb);
+ndocument.getElementById('sid').addEventListener('input', setCrumb);
 </script>
 </body>
 </html>
+
