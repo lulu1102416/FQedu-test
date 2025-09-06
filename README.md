@@ -1,5 +1,4 @@
 # FQedu-test
-
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
@@ -214,8 +213,7 @@ $('btnReset').addEventListener('click', ()=>{
 });
 
 document.getElementById('name').addEventListener('input', setCrumb);
-ndocument.getElementById('sid').addEventListener('input', setCrumb);
+document.getElementById('sid').addEventListener('input', setCrumb);
 </script>
 </body>
 </html>
-
