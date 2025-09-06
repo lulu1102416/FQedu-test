@@ -116,7 +116,7 @@
 
 <script>
 // 你的 Apps Script Web App URL（務必用 /exec）
-const API_URL = 'https://script.google.com/macros/s/AKfycbwGtBVaDhEI6sB1beM13ib93F4kMmPFRjn5Tvv65GNSOWW_aO0Kq_ZJESeuczXw4B4aQA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyBcSc7SMp6ZA710F4rN1gRdfga5RiVeE3_l3i3p_OaM63xItrnm6x8O9GUhQyiXMBp3A/exec';
 const $ = id => document.getElementById(id);
 const state = { qno:'', ans:{ STOCK:'',BOND:'',FX:'',COM:'',RE:'' } };
 
