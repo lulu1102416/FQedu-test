@@ -119,7 +119,7 @@
 
 <script>
 // 你的 Apps Script Web App URL（務必用 /exec）
-const API_URL = 'https://script.google.com/macros/s/AKfycbzlEgIbIr09xR_v5Ne9GdpkpoZhXz3n078njRGDA-z_jxI92m2Ct0PwlPvuhvzTm39mrg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwKzNUHhbWi5ydeqLZaeYUCVUqLQQvpKjBkEWogYWTnbKRffslisf4hfBtHNmnD5e10tw/exec';
 const $ = id => document.getElementById(id);
 
 const state = {
