@@ -97,7 +97,7 @@
           <div class="market" data-k="FX"></div>
         </div>
         <div class="sec">
-          <h4>商品</h4>
+          <h4>原物料</h4>
           <div class="market" data-k="COM"></div>
         </div>
         <div class="sec">
