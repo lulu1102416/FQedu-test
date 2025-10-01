@@ -219,28 +219,32 @@ $('btnSubmit').addEventListener('click', async ()=>{
     box.style.display = '';
 
     // 標記每市場對/錯與正解（若有提供答案）
-if(r.ans){
-  document.querySelectorAll('.market').forEach(box=>{
-    const [p,n] = box.querySelectorAll('.pill');
-    clearMarks(box);
+    // 標記每市場對/錯與正解（若有提供答案）
+    if(r.ans){
+      document.querySelectorAll('.market').forEach(box=>{
+        const [p,n] = box.querySelectorAll('.pill');
+        clearMarks(box);
+        // ⚠️ 只鎖定，不顯示答案/對錯
+        p.classList.add('disabled'); 
+        n.classList.add('disabled');
+      });
+    } else {
+      // 沒有答案也鎖定選項（避免重改）
+      document.querySelectorAll('.market .pill').forEach(p=>p.classList.add('disabled'));
+    }
 
-    // ⚠️ 只鎖定，不顯示答案/對錯
-    p.classList.add('disabled'); 
-    n.classList.add('disabled');
-  });
-} else {
-  // 沒有答案也鎖定選項（避免重改）
-  document.querySelectorAll('.market .pill').forEach(p=>p.classList.add('disabled'));
-}
+    state.submitted = true; 
+    state.submitting = false; 
+    updateSubmitState();
+    // 抽題鈕保持鎖定
+    $('btnFetch').disabled = true;
 
-state.submitted = true; 
-state.submitting = false; 
-updateSubmitState();
-
-// 抽題鈕保持鎖定
-$('btnFetch').disabled = true;
-}); 
+  }catch(err){
+    state.submitting = false; 
+    updateSubmitState(); 
+    toast(false, String(err.message||err));
+  }
+}); // ✅ 正確結束事件監聽器
 </script>
-</body>
-</html>
+
 
