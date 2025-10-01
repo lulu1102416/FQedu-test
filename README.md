@@ -219,35 +219,27 @@ $('btnSubmit').addEventListener('click', async ()=>{
     box.style.display = '';
 
     // 標記每市場對/錯與正解（若有提供答案）
-    if(r.ans){
-      document.querySelectorAll('.market').forEach(box=>{
-        const k = box.dataset.k; const correctSign = r.ans[k];
-        const [p,n] = box.querySelectorAll('.pill');
-        clearMarks(box);
-        if(correctSign === '+') p.classList.add('key');
-        if(correctSign === '-') n.classList.add('key');
-        const user = state.ans[k];
-        if(user === '+') p.classList.add(correctSign==='+'?'ok':'wrong');
-        if(user === '-') n.classList.add(correctSign==='-'?'ok':'wrong');
-        // 交卷後鎖定選項
-        p.classList.add('disabled'); n.classList.add('disabled');
-      });
-    } else {
-      // 沒有答案也鎖定選項（避免重改）
-      document.querySelectorAll('.market .pill').forEach(p=>p.classList.add('disabled'));
-    }
+if(r.ans){
+  document.querySelectorAll('.market').forEach(box=>{
+    const [p,n] = box.querySelectorAll('.pill');
+    clearMarks(box);
 
-    state.submitted = true; state.submitting = false; updateSubmitState();
-    // 抽題鈕保持鎖定
-    $('btnFetch').disabled = true;
-  }catch(err){ state.submitting=false; updateSubmitState(); toast(false, String(err.message||err)); }
-});
+    // ⚠️ 只鎖定，不顯示答案/對錯
+    p.classList.add('disabled'); 
+    n.classList.add('disabled');
+  });
+} else {
+  // 沒有答案也鎖定選項（避免重改）
+  document.querySelectorAll('.market .pill').forEach(p=>p.classList.add('disabled'));
+}
 
-$('btnBack').addEventListener('click', ()=>{ show($('qwrap'), false); toast(true,''); /* 抽題已鎖定，無法再抽 */ });
+state.submitted = true; 
+state.submitting = false; 
+updateSubmitState();
 
-// 動態更新送出可用態
-$('name').addEventListener('input', ()=>{ setCrumb(); updateSubmitState(); });
-$('studentId').addEventListener('input', ()=>{ setCrumb(); updateSubmitState(); });
+// 抽題鈕保持鎖定
+$('btnFetch').disabled = true;
+
 </script>
 </body>
 </html>
