@@ -239,7 +239,7 @@ updateSubmitState();
 
 // 抽題鈕保持鎖定
 $('btnFetch').disabled = true;
-
+}); 
 </script>
 </body>
 </html>
